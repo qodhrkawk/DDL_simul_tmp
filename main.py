@@ -14,12 +14,20 @@ import csv
 if __name__ == "__main__":
     rNum = 0
 
-    mx_loss = []
-    mx_acc = []
-    mn_loss = []
-    mn_acc = []
-    ag_loss = []
-    ag_acc = []
+    normal_mx_loss = []
+    normal_mx_acc = []
+    normal_mn_loss = []
+    normal_mn_acc = []
+    normal_ag_loss = []
+    normal_ag_acc = []
+
+    mal_mx_loss = []
+    mal_mx_acc = []
+    mal_mn_loss = []
+    mal_mn_acc = []
+    mal_ag_loss = []
+    mal_ag_acc = []
+
     round_label = []
 
     for i in range(50):
@@ -55,19 +63,25 @@ if __name__ == "__main__":
         my_eval = self.evaluate_model()
         my_eff = my_eval[1] - my_eval[0]
 
+        if int(self.id) < 30 :
+            for node in nodes :
+                if node.id == self.id :
+                    continue
 
-
-        for node in nodes :
-            if node.id == self.id :
-                continue
-
-            testNode.set_model_weights(node.get_model_weights())
-            met = testNode.evaluate_model()
-            if met[1]-met[0] > my_eff-my_eff*(1/(100-rNum)):
-            #if met[1]-met[0] > my_eff-my_eff*0.1:
+                testNode.set_model_weights(node.get_model_weights())
+                met = testNode.evaluate_model()
+                #if met[1]-met[0] > my_eff-my_eff*(1/(100-rNum)):
+                if met[1]-met[0] > my_eff-my_eff*0.1:
+                    reputation[node.id] = 1
+                else:
+                    reputation[node.id] = 0
+        else :
+            for node in nodes:
+                if node.id == self.id:
+                    continue
                 reputation[node.id] = 1
-            else:
-                reputation[node.id] = 0
+
+
 
         self.set_reputation(reputation)
 
@@ -178,8 +192,14 @@ if __name__ == "__main__":
              for j in range(len(my_y_train[i])):
                  if my_y_train[i][j] == 2:
                     my_new_y_train[j] = 4
+                 elif my_y_train[i][j] == 6:
+                    my_new_y_train[j] == 1
+
                  else:
                     my_new_y_train[j] = my_y_train[i][j]
+
+
+
 
              nodes.append(Malicious(
                 id,
@@ -280,29 +300,48 @@ if __name__ == "__main__":
             max(accuracies), min(accuracies), sum(accuracies) / len(accuracies)))
 
         # eval. by master testset
-        losses = list()
-        accuracies = list()
+        normal_losses = list()
+        normal_accuracies = list()
+        mal_losses = list()
+        mal_accuracies = list()
         for node in nodes:
             metrics = node.get_model().evaluate(
                 master_testset_X,
                 master_testset_Y)
             # print("test  :\t", node.id, loss, metrics)
-            losses.append(metrics[0])
-            accuracies.append(metrics[1])
-            print("mst:\tnode: %5s\tloss: %7.4f\tacc : %7.4f," % (
-                node.id, metrics[0], metrics[1]), end="\r")
+            if int(node.id) < 30:
+                normal_losses.append(metrics[0])
+                normal_accuracies.append(metrics[1])
+                print("mst:\tnode: %5s\tloss: %7.4f\tacc : %7.4f," % (
+                    node.id, metrics[0], metrics[1]), end="\r")
+            else :
+                mal_losses.append(metrics[0])
+                mal_accuracies.append(metrics[1])
+                print("mst:\tnode: %5s\tloss: %7.4f\tacc : %7.4f," % (
+                    node.id, metrics[0], metrics[1]), end="\r")
 
         print(" " * 73, end="\r")
-        print("mst:\tmax_loss: %7.4f\tmin_loss: %7.4f\tavg_loss: %7.4f" % (
-            max(losses), min(losses), sum(losses) / len(losses)))
-        mx_loss.append(max(losses))
-        mn_loss.append(min(losses))
-        ag_loss.append(sum(losses) / len(losses))
-        print("mst:\tmax_acc : %7.4f\tmin_acc : %7.4f\tavg_acc : %7.4f" % (
-            max(accuracies), min(accuracies), sum(accuracies) / len(accuracies)))
-        mx_acc.append(max(accuracies))
-        mn_acc.append(min(accuracies))
-        ag_acc.append(sum(accuracies) / len(accuracies))
+        print("normal_mst:\tmax_loss: %7.4f\tmin_loss: %7.4f\tavg_loss: %7.4f" % (
+            max(normal_losses), min(normal_losses), sum(normal_losses) / len(normal_losses)))
+        print("malicious_mst:\tmax_loss: %7.4f\tmin_loss: %7.4f\tavg_loss: %7.4f" % (
+            max(mal_losses), min(mal_losses), sum(mal_losses) / len(mal_losses)))
+        normal_mx_loss.append(max(normal_losses))
+        normal_mn_loss.append(min(normal_losses))
+        normal_ag_loss.append(sum(normal_losses) / len(normal_losses))
+
+        mal_mx_loss.append(max(mal_losses))
+        mal_mn_loss.append(min(mal_losses))
+        mal_ag_loss.append(sum(mal_losses) / len(mal_losses))
+
+        print("normal_mst:\tmax_acc : %7.4f\tmin_acc : %7.4f\tavg_acc : %7.4f" % (
+            max(normal_accuracies), min(normal_accuracies), sum(normal_accuracies) / len(normal_accuracies)))
+        normal_mx_acc.append(max(normal_accuracies))
+        normal_mn_acc.append(min(normal_accuracies))
+        normal_ag_acc.append(sum(normal_accuracies) / len(normal_accuracies))
+
+        mal_mx_acc.append(max(mal_accuracies))
+        mal_mn_acc.append(min(mal_accuracies))
+        mal_ag_acc.append(sum(mal_accuracies) / len(mal_accuracies))
 
 
         # time
@@ -315,40 +354,65 @@ if __name__ == "__main__":
 
 
 
-    mx_data = []
-    mn_data = []
-    ag_data = []
+    normal_mx_data = []
+    normal_mn_data = []
+    normal_ag_data = []
+    mal_mx_data = []
+    mal_mn_data = []
+    mal_ag_data = []
+
     for i in range(50):
-        mx_data.append([mx_acc[i],mx_loss[i]])
-        mn_data.append([mn_acc[i],mn_loss[i]])
-        ag_data.append([ag_acc[i],ag_loss[i]])
+        normal_mx_data.append([normal_mx_acc[i],normal_mx_loss[i]])
+        normal_mn_data.append([normal_mn_acc[i],normal_mn_loss[i]])
+        normal_ag_data.append([normal_ag_acc[i],normal_ag_loss[i]])
+
+        mal_mx_data.append([mal_mx_acc[i], mal_mx_loss[i]])
+        mal_mn_data.append([mal_mn_acc[i], mal_mn_loss[i]])
+        mal_ag_data.append([mal_ag_acc[i], mal_ag_loss[i]])
 
 
-    max_csvfile = open("max.csv", "w", newline="")
-    max_csvwriter = csv.writer(max_csvfile)
-    for row in mx_data:
-        max_csvwriter.writerow(row)
-    max_csvfile.close()
-
-    min_csvfile = open("min.csv", "w", newline="")
-    min_csvwriter = csv.writer(min_csvfile)
+    normal_max_csvfile = open("1_normal_max.csv", "w", newline="")
+    normal_max_csvwriter = csv.writer(normal_max_csvfile)
+    for row in normal_mx_data:
+        normal_max_csvwriter.writerow(row)
+    normal_max_csvfile.close()
 
 
-    for row in mn_data :
-        min_csvwriter.writerow(row)
-
-    min_csvfile.close()
-
-    avg_csvfile = open("avg.csv", "w", newline="")
-    avg_csvwriter = csv.writer(avg_csvfile)
-    for row in ag_data:
-        avg_csvwriter.writerow(row)
-    avg_csvfile.close()
+    mal_max_csvfile = open("1_mal_max.csv", "w", newline="")
+    mal_max_csvwriter = csv.writer(mal_max_csvfile)
+    for row in mal_mx_data:
+        mal_max_csvwriter.writerow(row)
+    mal_max_csvfile.close()
 
 
-    print(mx_data)
+    normal_min_csvfile = open("1_normal_min.csv", "w", newline="")
+    normal_min_csvwriter = csv.writer(normal_min_csvfile)
+    for row in normal_mn_data :
+        normal_min_csvwriter.writerow(row)
+    normal_min_csvfile.close()
 
-    with open("max.csv", "r", newline="") as max_csvfile:
+    mal_min_csvfile = open("1_mal_min.csv", "w", newline="")
+    mal_min_csvwriter = csv.writer(mal_min_csvfile)
+    for row in mal_mn_data:
+        mal_min_csvwriter.writerow(row)
+    mal_min_csvfile.close()
+
+    normal_avg_csvfile = open("1_normal_avg.csv", "w", newline="")
+    normal_avg_csvwriter = csv.writer(normal_avg_csvfile)
+    for row in normal_ag_data:
+        normal_avg_csvwriter.writerow(row)
+    normal_avg_csvfile.close()
+
+    mal_avg_csvfile = open("1_mal_avg.csv", "w", newline="")
+    mal_avg_csvwriter = csv.writer(mal_avg_csvfile)
+    for row in mal_ag_data:
+        mal_avg_csvwriter.writerow(row)
+    mal_avg_csvfile.close()
+
+
+
+
+    with open("1_normal_max.csv", "r", newline="") as max_csvfile:
         max_data_reader = csv.reader(max_csvfile)
         max_csv_data = [row for row in max_data_reader]
     max_accs = [float(elem[0]) for elem in max_csv_data]
@@ -365,7 +429,24 @@ if __name__ == "__main__":
     ax.plot(round_label, max_losses)
     plt.show()
 
-    with open("min.csv", "r", newline="") as min_csvfile:
+    with open("1_mal_max.csv", "r", newline="") as max_csvfile:
+        max_data_reader = csv.reader(max_csvfile)
+        max_csv_data = [row for row in max_data_reader]
+    max_accs = [float(elem[0]) for elem in max_csv_data]
+    max_losses = [float(elem[1]) for elem in max_csv_data]
+
+    max_accs = np.array(max_accs)
+    max_losses = np.array(max_losses)
+    fig, ax = plt.subplots()
+
+    print(max_accs)
+    print(max_losses)
+
+    ax.plot(round_label, max_accs)
+    ax.plot(round_label, max_losses)
+    plt.show()
+
+    with open("1_normal_min.csv", "r", newline="") as min_csvfile:
         min_data_reader = csv.reader(min_csvfile)
         min_csv_data = [row for row in min_data_reader]
     min_accs = [float(elem[0]) for elem in min_csv_data]
@@ -378,7 +459,20 @@ if __name__ == "__main__":
     ax.plot(round_label, min_losses)
     plt.show()
 
-    with open("avg.csv", "r", newline="") as avg_csvfile:
+    with open("1_mal_min.csv", "r", newline="") as min_csvfile:
+        min_data_reader = csv.reader(min_csvfile)
+        min_csv_data = [row for row in min_data_reader]
+    min_accs = [float(elem[0]) for elem in min_csv_data]
+    min_losses = [float(elem[1]) for elem in min_csv_data]
+
+    min_accs = np.array(min_accs)
+    min_losses = np.array(min_losses)
+    fig, ax = plt.subplots()
+    ax.plot(round_label, min_accs)
+    ax.plot(round_label, min_losses)
+    plt.show()
+
+    with open("1_normal_avg.csv", "r", newline="") as avg_csvfile:
         avg_data_reader = csv.reader(avg_csvfile)
         avg_csv_data = [row for row in avg_data_reader]
     avg_accs = [float(elem[0]) for elem in avg_csv_data]
@@ -391,3 +485,15 @@ if __name__ == "__main__":
     ax.plot(round_label, avg_losses)
     plt.show()
 
+    with open("1_mal_avg.csv", "r", newline="") as avg_csvfile:
+        avg_data_reader = csv.reader(avg_csvfile)
+        avg_csv_data = [row for row in avg_data_reader]
+    avg_accs = [float(elem[0]) for elem in avg_csv_data]
+    avg_losses = [float(elem[1]) for elem in avg_csv_data]
+
+    avg_accs = np.array(avg_accs)
+    avg_losses = np.array(avg_losses)
+    fig, ax = plt.subplots()
+    ax.plot(round_label, avg_accs)
+    ax.plot(round_label, avg_losses)
+    plt.show()
